@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { CryptoPrices } from "@/components/crypto-price";
 import { WagerCard } from "@/components/wager-card";
 import { WagerHistory } from "@/components/wager-history";
+import { WagerStats } from "@/components/wager-stats";
 import { SUPPORTED_COINS } from "@/lib/crypto";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { WalletButton } from "@/components/wallet-button";
@@ -59,8 +60,9 @@ export default function Home() {
           </Tabs>
         </div>
 
-        <div>
+        <div className="space-y-8">
           <WagerHistory />
+          <WagerStats />
         </div>
       </div>
     </div>

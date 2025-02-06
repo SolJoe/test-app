@@ -14,11 +14,14 @@ export const wagers = pgTable("wagers", {
   multiplier: real("multiplier").notNull(),
   targetPrice: real("target_price").notNull(),
   startPrice: real("start_price").notNull(),
-  direction: text("direction").notNull().default('up'), 
+  direction: text("direction").notNull().default('up'),
   startTime: timestamp("start_time").notNull(),
   endTime: timestamp("end_time").notNull(),
   isActive: boolean("is_active").notNull().default(true),
   won: boolean("won").default(false),
+  completedAt: timestamp("completed_at"),
+  finalPrice: real("final_price"),
+  profit: real("profit"),
 });
 
 export const insertWagerSchema = z.object({

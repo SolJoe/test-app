@@ -85,6 +85,11 @@ export function registerRoutes(app: Express): Server {
     res.json(wagers);
   });
 
+  app.get("/api/wagers/history", async (_req, res) => {
+    const wagers = await storage.getAllWagers();
+    res.json(wagers);
+  });
+
   // WebSocket connection for real-time price updates
   wss.on("connection", async (ws) => {
     // Send initial prices immediately on connection
@@ -98,6 +103,22 @@ export function registerRoutes(app: Express): Server {
         const prices = await fetchCryptoPrices();
         if (prices) {
           ws.send(JSON.stringify(prices));
+
+          // Check and update active wagers
+          const activeWagers = await storage.getActiveWagers();
+          for (const wager of activeWagers) {
+            const currentPrice = prices[wager.cryptoId];
+            const now = new Date();
+
+            if (now >= new Date(wager.endTime)) {
+              // Wager has expired
+              const won = wager.direction === 'up'
+                ? currentPrice >= wager.targetPrice
+                : currentPrice <= wager.targetPrice;
+
+              await storage.updateWagerStatus(wager.id, won, currentPrice);
+            }
+          }
         }
       }
     }, 10000); // Update every 10 seconds to respect API rate limits

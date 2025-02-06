@@ -5,7 +5,8 @@ import { eq } from "drizzle-orm";
 export interface IStorage {
   createWager(wager: InsertWager): Promise<Wager>;
   getActiveWagers(): Promise<Wager[]>;
-  updateWagerStatus(id: number, won: boolean): Promise<void>;
+  getAllWagers(): Promise<Wager[]>;
+  updateWagerStatus(id: number, won: boolean, finalPrice: number): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -24,10 +25,33 @@ export class DatabaseStorage implements IStorage {
       .where(eq(wagers.isActive, true));
   }
 
-  async updateWagerStatus(id: number, won: boolean): Promise<void> {
+  async getAllWagers(): Promise<Wager[]> {
+    return db
+      .select()
+      .from(wagers)
+      .orderBy(wagers.startTime);
+  }
+
+  async updateWagerStatus(id: number, won: boolean, finalPrice: number): Promise<void> {
+    const wager = await db
+      .select()
+      .from(wagers)
+      .where(eq(wagers.id, id))
+      .then(rows => rows[0]);
+
+    if (!wager) return;
+
+    const profit = won ? wager.amount * wager.multiplier : 0;
+
     await db
       .update(wagers)
-      .set({ isActive: false, won })
+      .set({
+        isActive: false,
+        won,
+        finalPrice,
+        profit,
+        completedAt: new Date(),
+      })
       .where(eq(wagers.id, id));
   }
 }
