@@ -126,19 +126,17 @@ function WagerProgress({ startTime, endTime }: { startTime: Date; endTime: Date 
 
   // Color transitions based on progress
   const getProgressColor = (value: number) => {
-    if (value >= 75) return "destructive";
-    if (value >= 50) return "warning";
-    return "success";
+    if (value >= 100) return "bg-destructive";
+    if (value >= 75) return "bg-destructive";
+    if (value >= 50) return "bg-warning";
+    return "bg-success";
   };
 
   return (
     <div className="space-y-1.5">
       <Progress
         value={progress}
-        className={`h-4 overflow-hidden rounded-full bg-secondary`}
-        style={{
-          ["--progress-color" as any]: `hsl(var(--${getProgressColor(progress)}))`,
-        }}
+        className={`h-4 overflow-hidden rounded-full bg-secondary ${getProgressColor(progress)}`}
       />
     </div>
   );
