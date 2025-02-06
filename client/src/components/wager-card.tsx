@@ -1,0 +1,135 @@
+import { useState, useEffect } from "react";
+import { Card, CardHeader, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { CoinId, calculatePotentialWinnings, calculateTargetPrice } from "@/lib/crypto";
+import { useMutation } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+
+interface WagerCardProps {
+  coinId: CoinId;
+  currentPrice: number;
+}
+
+export function WagerCard({ coinId, currentPrice }: WagerCardProps) {
+  const [amount, setAmount] = useState("");
+  const [multiplier, setMultiplier] = useState("");
+  const [countdown, setCountdown] = useState<number | null>(null);
+  const [targetPrice, setTargetPrice] = useState<number | null>(null);
+
+  const potentialWinnings = amount && multiplier 
+    ? calculatePotentialWinnings(Number(amount), Number(multiplier))
+    : null;
+
+  const { mutate: placeWager, isPending } = useMutation({
+    mutationFn: async () => {
+      const target = calculateTargetPrice(currentPrice, Number(multiplier));
+      const startTime = new Date();
+      const endTime = new Date(startTime.getTime() + 60 * 60 * 1000); // 1 hour
+
+      return apiRequest("POST", "/api/wagers", {
+        cryptoId: coinId,
+        amount: Number(amount),
+        multiplier: Number(multiplier),
+        targetPrice: target,
+        startPrice: currentPrice,
+        startTime,
+        endTime,
+      });
+    },
+  });
+
+  useEffect(() => {
+    if (countdown === null) return;
+    
+    const timer = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev === null || prev <= 0) {
+          clearInterval(timer);
+          return null;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [countdown]);
+
+  const handleSubmit = () => {
+    placeWager(undefined, {
+      onSuccess: () => {
+        setCountdown(3600); // 1 hour in seconds
+        setTargetPrice(calculateTargetPrice(currentPrice, Number(multiplier)));
+      },
+    });
+  };
+
+  return (
+    <Card className="w-full max-w-md mx-auto">
+      <CardHeader className="text-2xl font-bold text-center">
+        Place Wager
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Wager Amount</label>
+          <Input
+            type="number"
+            placeholder="Enter amount in USDC"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Wager Multiplier</label>
+          <Select onValueChange={setMultiplier} value={multiplier}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select multiplier" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="1">1x</SelectItem>
+              <SelectItem value="2">2x</SelectItem>
+              <SelectItem value="3">3x</SelectItem>
+              <SelectItem value="5">5x</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Potential Winnings</label>
+          <div className="text-xl font-bold">
+            ${potentialWinnings?.toFixed(2) || "0.00"} USDC
+          </div>
+        </div>
+
+        {countdown !== null && targetPrice !== null && (
+          <div className="p-4 bg-secondary rounded-lg">
+            <div className="text-center space-y-2">
+              <div className="text-xl font-bold">
+                Time Remaining: {Math.floor(countdown / 60)}:{(countdown % 60).toString().padStart(2, "0")}
+              </div>
+              <div>
+                Target Price: ${targetPrice.toFixed(2)}
+              </div>
+            </div>
+          </div>
+        )}
+
+        <Button 
+          className="w-full" 
+          onClick={handleSubmit}
+          disabled={!amount || !multiplier || isPending || countdown !== null}
+        >
+          {isPending ? "Placing Wager..." : "Place Wager"}
+        </Button>
+      </CardContent>
+    </Card>
+  );
+}
