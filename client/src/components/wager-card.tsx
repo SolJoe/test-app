@@ -33,8 +33,12 @@ export function WagerCard({ coinId, currentPrice }: WagerCardProps) {
   const { mutate: placeWager, isPending } = useMutation({
     mutationFn: async () => {
       if (!multiplier) throw new Error("No multiplier selected");
-      if (!amount || isNaN(Number(amount))) throw new Error("Invalid wager amount");
-      if (currentPrice <= 0) throw new Error("Invalid current price");
+      if (!amount || isNaN(Number(amount)) || Number(amount) <= 0) {
+        throw new Error("Please enter a valid wager amount");
+      }
+      if (!currentPrice || isNaN(currentPrice) || currentPrice <= 0) {
+        throw new Error("Cannot place wager: waiting for valid price data");
+      }
 
       const target = calculateTargetPrice(currentPrice, multiplier);
       const startTime = new Date();
@@ -97,6 +101,16 @@ export function WagerCard({ coinId, currentPrice }: WagerCardProps) {
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-2">
+          <label className="text-sm font-medium">Current Price</label>
+          <div className="text-lg font-semibold">
+            ${currentPrice?.toLocaleString(undefined, {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            }) || "Loading..."}
+          </div>
+        </div>
+
+        <div className="space-y-2">
           <label className="text-sm font-medium">Wager Amount</label>
           <Input
             type="number"
@@ -147,9 +161,9 @@ export function WagerCard({ coinId, currentPrice }: WagerCardProps) {
         <Button 
           className="w-full" 
           onClick={handleSubmit}
-          disabled={!amount || !multiplier || isPending || countdown !== null}
+          disabled={!amount || !multiplier || isPending || countdown !== null || !currentPrice}
         >
-          {isPending ? "Placing Wager..." : "Place Wager"}
+          {isPending ? "Placing Wager..." : !currentPrice ? "Waiting for price data..." : "Place Wager"}
         </Button>
       </CardContent>
     </Card>

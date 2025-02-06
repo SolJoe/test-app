@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { CryptoPrices } from "@/components/crypto-price";
 import { WagerCard } from "@/components/wager-card";
 import { SUPPORTED_COINS } from "@/lib/crypto";
@@ -6,6 +6,18 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function Home() {
   const [prices, setPrices] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+    const wsUrl = `${protocol}//${window.location.host}/ws`;
+    const socket = new WebSocket(wsUrl);
+
+    socket.onmessage = (event) => {
+      setPrices(JSON.parse(event.data));
+    };
+
+    return () => socket.close();
+  }, []);
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -26,7 +38,7 @@ export default function Home() {
 
         {SUPPORTED_COINS.map((coin) => (
           <TabsContent key={coin.id} value={coin.id}>
-            <WagerCard coinId={coin.id} currentPrice={prices[coin.id] || 0} />
+            <WagerCard coinId={coin.id} currentPrice={prices[coin.id]} />
           </TabsContent>
         ))}
       </Tabs>
