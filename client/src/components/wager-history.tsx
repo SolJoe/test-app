@@ -5,6 +5,7 @@ import { Loader2, ArrowUpCircle, ArrowDownCircle } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import type { Wager } from "@shared/schema";
 import { ShareWager } from "@/components/share-wager";
+import { SUPPORTED_COINS } from "@/lib/crypto";
 
 export function WagerHistory() {
   const { data: wagers, isLoading } = useQuery<Wager[]>({
@@ -69,6 +70,8 @@ export function WagerHistory() {
 
 // Extracted WagerCard component for reuse
 function WagerCard({ wager }: { wager: Wager }) {
+  const coinName = SUPPORTED_COINS.find(coin => coin.id === wager.cryptoId)?.name || wager.cryptoId;
+
   return (
     <div
       className={`flex flex-col space-y-2 p-4 border rounded-lg ${
@@ -80,7 +83,7 @@ function WagerCard({ wager }: { wager: Wager }) {
       }`}
     >
       <div className="flex justify-between items-center">
-        <span className="font-medium">Direction:</span>
+        <span className="font-medium text-lg">{coinName}</span>
         <span className="flex items-center">
           {wager.direction === "up" ? (
             <ArrowUpCircle className="mr-1 h-4 w-4 text-green-500" />
