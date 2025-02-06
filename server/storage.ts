@@ -8,6 +8,7 @@ export interface IStorage {
   getAllWagers(): Promise<Wager[]>;
   getRecentWagers(): Promise<Wager[]>;
   updateWagerStatus(id: number, won: boolean, finalPrice: number): Promise<void>;
+  updateTargetHit(id: number): Promise<void>; // New method
 }
 
 export class DatabaseStorage implements IStorage {
@@ -43,6 +44,13 @@ export class DatabaseStorage implements IStorage {
       .from(wagers)
       .orderBy(wagers.startTime, "desc")
       .limit(10);
+  }
+
+  async updateTargetHit(id: number): Promise<void> {
+    await db
+      .update(wagers)
+      .set({ targetHit: true })
+      .where(eq(wagers.id, id));
   }
 
   async updateWagerStatus(id: number, won: boolean, finalPrice: number): Promise<void> {

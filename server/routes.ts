@@ -174,24 +174,34 @@ export function registerRoutes(app: Express): Server {
             const currentPrice = prices[wager.cryptoId];
             const now = new Date();
 
+            // Check if target price is hit
+            const targetHit = wager.direction === 'up'
+              ? currentPrice >= wager.targetPrice
+              : currentPrice <= wager.targetPrice;
+
+            if (targetHit && !wager.targetHit) {
+              // If target is hit for the first time, update the wager
+              await storage.updateTargetHit(wager.id);
+              console.log('Target price hit for wager:', {
+                id: wager.id,
+                direction: wager.direction,
+                currentPrice,
+                targetPrice: wager.targetPrice
+              });
+            }
+
             if (now >= new Date(wager.endTime)) {
-              console.log('Checking wager:', {
+              console.log('Completing wager:', {
                 id: wager.id,
                 cryptoId: wager.cryptoId,
                 direction: wager.direction,
                 currentPrice,
                 targetPrice: wager.targetPrice,
-                startPrice: wager.startPrice
+                targetHit: wager.targetHit
               });
 
-              // Fix winning condition logic
-              const priceMovedUp = currentPrice > wager.startPrice;
-              const priceMovedDown = currentPrice < wager.startPrice;
-
-              const won = (wager.direction === 'up' && priceMovedUp) || 
-                         (wager.direction === 'down' && priceMovedDown);
-
-              await storage.updateWagerStatus(wager.id, won, currentPrice);
+              // Win is determined by whether target was hit during the wager period
+              await storage.updateWagerStatus(wager.id, wager.targetHit, currentPrice);
             }
           }
         }

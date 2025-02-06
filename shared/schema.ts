@@ -22,6 +22,7 @@ export const wagers = pgTable("wagers", {
   completedAt: timestamp("completed_at"),
   finalPrice: real("final_price"),
   profit: real("profit"),
+  targetHit: boolean("target_hit").default(false), // New field to track if target was hit
 });
 
 export const insertWagerSchema = z.object({
