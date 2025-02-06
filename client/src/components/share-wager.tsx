@@ -1,5 +1,5 @@
 import { Share2 } from "lucide-react";
-import { SiX, SiFacebook } from "react-icons/si";
+import { SiX, SiInstagram } from "react-icons/si";
 import { Button } from "@/components/ui/button";
 import type { Wager } from "@shared/schema";
 import { SUPPORTED_COINS } from "@/lib/crypto";
@@ -20,9 +20,10 @@ export function ShareWager({ wager }: ShareWagerProps) {
     window.open(twitterUrl, '_blank');
   };
 
-  const shareViaFacebook = () => {
-    const facebookUrl = `https://www.facebook.com/sharer/sharer.php?quote=${encodeURIComponent(shareText)}`;
-    window.open(facebookUrl, '_blank');
+  const shareViaInstagram = () => {
+    // Instagram doesn't have a direct web sharing API, 
+    // but we can open Instagram in a new tab
+    window.open('https://instagram.com', '_blank');
   };
 
   return (
@@ -40,27 +41,11 @@ export function ShareWager({ wager }: ShareWagerProps) {
         variant="outline"
         size="sm"
         className="flex items-center gap-2"
-        onClick={shareViaFacebook}
+        onClick={shareViaInstagram}
       >
-        <SiFacebook className="h-4 w-4" />
-        Share on Facebook
+        <SiInstagram className="h-4 w-4" />
+        Share on Instagram
       </Button>
-      {navigator.share && (
-        <Button
-          variant="outline"
-          size="sm"
-          className="flex items-center gap-2"
-          onClick={() => {
-            navigator.share({
-              title: wager.won ? 'Successful Crypto Wager' : 'Crypto Wager Result',
-              text: shareText,
-            }).catch(err => console.error('Error sharing:', err));
-          }}
-        >
-          <Share2 className="h-4 w-4" />
-          Share
-        </Button>
-      )}
     </div>
   );
 }
