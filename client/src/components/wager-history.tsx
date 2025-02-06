@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2 } from "lucide-react";
+import { Loader2, ArrowUpCircle, ArrowDownCircle } from "lucide-react";
 import type { Wager } from "@shared/schema";
 
 export function WagerHistory() {
@@ -28,6 +28,17 @@ export function WagerHistory() {
               key={wager.id}
               className="flex flex-col space-y-2 p-4 border rounded-lg"
             >
+              <div className="flex justify-between items-center">
+                <span className="font-medium">Direction:</span>
+                <span className="flex items-center">
+                  {wager.direction === 'up' ? (
+                    <ArrowUpCircle className="mr-1 h-4 w-4 text-green-500" />
+                  ) : (
+                    <ArrowDownCircle className="mr-1 h-4 w-4 text-red-500" />
+                  )}
+                  {wager.direction.toUpperCase()}
+                </span>
+              </div>
               <div className="flex justify-between">
                 <span className="font-medium">Wager Amount:</span>
                 <span>${wager.amount} USDC</span>
@@ -68,11 +79,11 @@ export function WagerHistory() {
 function formatTimeRemaining(endTime: Date): string {
   const now = new Date();
   const diff = endTime.getTime() - now.getTime();
-  
+
   if (diff <= 0) return "Expired";
-  
+
   const minutes = Math.floor(diff / (1000 * 60));
   const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-  
+
   return `${minutes}:${seconds.toString().padStart(2, '0')}`;
 }

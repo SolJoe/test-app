@@ -9,11 +9,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { CoinId, SUPPORTED_COINS, calculatePotentialWinnings, calculateTargetPrice, type WagerMultiplier } from "@/lib/crypto";
+import {
+  CoinId,
+  SUPPORTED_COINS,
+  calculatePotentialWinnings,
+  calculateTargetPrice,
+  type WagerMultiplier,
+  type WagerDirection,
+} from "@/lib/crypto";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { triggerConfetti } from "@/lib/confetti";
+import { ArrowUpCircle, ArrowDownCircle } from "lucide-react";
 
 interface WagerCardProps {
   coinId: CoinId;
@@ -23,6 +31,7 @@ interface WagerCardProps {
 export function WagerCard({ coinId, currentPrice }: WagerCardProps) {
   const [amount, setAmount] = useState("");
   const [multiplier, setMultiplier] = useState<WagerMultiplier | "">("");
+  const [direction, setDirection] = useState<WagerDirection>("up");
   const [countdown, setCountdown] = useState<number | null>(null);
   const [targetPrice, setTargetPrice] = useState<number | null>(null);
   const [startPrice, setStartPrice] = useState<number | null>(null);
@@ -44,7 +53,7 @@ export function WagerCard({ coinId, currentPrice }: WagerCardProps) {
         throw new Error("Cannot place wager: waiting for valid price data");
       }
 
-      const target = calculateTargetPrice(currentPrice, multiplier);
+      const target = calculateTargetPrice(currentPrice, multiplier, direction);
       const startTime = new Date();
       const endTime = new Date(startTime.getTime() + 60 * 60 * 1000); // 1 hour
 
@@ -54,6 +63,7 @@ export function WagerCard({ coinId, currentPrice }: WagerCardProps) {
         multiplier: Number(multiplier),
         targetPrice: target,
         startPrice: currentPrice,
+        direction,
         startTime: startTime.toISOString(),
         endTime: endTime.toISOString(),
       };
@@ -63,7 +73,7 @@ export function WagerCard({ coinId, currentPrice }: WagerCardProps) {
     onSuccess: () => {
       setCountdown(3600); // 1 hour in seconds
       if (multiplier) {
-        const target = calculateTargetPrice(currentPrice, multiplier);
+        const target = calculateTargetPrice(currentPrice, multiplier, direction);
         setTargetPrice(target);
         setStartPrice(currentPrice);
       }
@@ -98,23 +108,6 @@ export function WagerCard({ coinId, currentPrice }: WagerCardProps) {
     return () => clearInterval(timer);
   }, [countdown]);
 
-  const handleSubmit = () => {
-    const startTime = new Date();
-    const endTime = new Date(startTime.getTime() + 60 * 60 * 1000); // 1 hour from now
-
-    const wagerData = {
-      cryptoId: coinId,
-      amount: Number(amount),
-      multiplier: Number(multiplier),
-      targetPrice: calculateTargetPrice(currentPrice, multiplier as WagerMultiplier),
-      startPrice: currentPrice,
-      startTime: startTime.toISOString(),
-      endTime: endTime.toISOString(),
-    };
-
-    placeWager(undefined);
-  };
-
   return (
     <Card className="w-full max-w-md mx-auto">
       <CardHeader className="text-2xl font-bold text-center">
@@ -128,6 +121,28 @@ export function WagerCard({ coinId, currentPrice }: WagerCardProps) {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,
             }) || "Loading..."}
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Wager Direction</label>
+          <div className="flex gap-2">
+            <Button
+              variant={direction === 'up' ? 'default' : 'outline'}
+              className="flex-1"
+              onClick={() => setDirection('up')}
+            >
+              <ArrowUpCircle className="mr-2 h-4 w-4" />
+              Up
+            </Button>
+            <Button
+              variant={direction === 'down' ? 'default' : 'outline'}
+              className="flex-1"
+              onClick={() => setDirection('down')}
+            >
+              <ArrowDownCircle className="mr-2 h-4 w-4" />
+              Down
+            </Button>
           </div>
         </div>
 
@@ -180,7 +195,7 @@ export function WagerCard({ coinId, currentPrice }: WagerCardProps) {
                 <span>Target Price: ${targetPrice.toLocaleString(undefined, {
                   minimumFractionDigits: 2,
                   maximumFractionDigits: 2,
-                })}</span>
+                })} ({direction === 'up' ? '↑' : '↓'})</span>
               </div>
             </div>
           </div>
@@ -188,7 +203,7 @@ export function WagerCard({ coinId, currentPrice }: WagerCardProps) {
 
         <Button
           className="w-full"
-          onClick={handleSubmit}
+          onClick={() => placeWager()}
           disabled={!amount || !multiplier || isPending || countdown !== null || !currentPrice}
         >
           {isPending ? "Placing Wager..." : !currentPrice ? "Waiting for price data..." : "Place Wager"}
