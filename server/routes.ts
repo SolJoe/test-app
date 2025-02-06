@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { WebSocketServer } from "ws";
 import { storage } from "./storage";
 import { insertWagerSchema } from "@shared/schema";
+import { fromZodError } from "zod-validation-error";
 
 export function registerRoutes(app: Express): Server {
   const httpServer = createServer(app);
@@ -10,11 +11,18 @@ export function registerRoutes(app: Express): Server {
 
   app.post("/api/wagers", async (req, res) => {
     try {
-      const wager = insertWagerSchema.parse(req.body);
-      const created = await storage.createWager(wager);
+      const result = insertWagerSchema.safeParse(req.body);
+
+      if (!result.success) {
+        const validationError = fromZodError(result.error);
+        return res.status(400).json({ error: validationError.message });
+      }
+
+      const created = await storage.createWager(result.data);
       res.json(created);
     } catch (error) {
-      res.status(400).json({ error: "Invalid wager data" });
+      console.error('Error creating wager:', error);
+      res.status(500).json({ error: "Failed to create wager" });
     }
   });
 
@@ -27,7 +35,7 @@ export function registerRoutes(app: Express): Server {
   wss.on("connection", (ws) => {
     const interval = setInterval(async () => {
       if (ws.readyState === ws.OPEN) {
-        // Fetch latest prices from CoinGecko
+        // Mock price updates for testing
         const prices = {
           bitcoin: Math.random() * 50000 + 40000,
           ethereum: Math.random() * 3000 + 2000,
