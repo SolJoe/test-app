@@ -7,6 +7,7 @@ import type { Wager } from "@shared/schema";
 export function WagerHistory() {
   const { data: wagers, isLoading } = useQuery<Wager[]>({
     queryKey: ["/api/wagers/active"],
+    refetchInterval: 5000, // Refetch every 5 seconds
   });
 
   if (isLoading) {

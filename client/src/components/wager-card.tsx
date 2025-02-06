@@ -22,6 +22,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { triggerConfetti } from "@/lib/confetti";
 import { ArrowUpCircle, ArrowDownCircle } from "lucide-react";
+import { queryClient } from "@/lib/queryClient";
 
 interface WagerCardProps {
   coinId: CoinId;
@@ -77,6 +78,8 @@ export function WagerCard({ coinId, currentPrice }: WagerCardProps) {
         setTargetPrice(target);
         setStartPrice(currentPrice);
       }
+      // Invalidate the active wagers query to trigger a refetch
+      queryClient.invalidateQueries({ queryKey: ["/api/wagers/active"] });
       triggerConfetti(coinId);
       toast({
         title: "Wager placed successfully! 🎉",
