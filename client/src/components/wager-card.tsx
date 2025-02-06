@@ -67,7 +67,7 @@ export function WagerCard({ coinId, currentPrice }: WagerCardProps) {
         setTargetPrice(target);
         setStartPrice(currentPrice);
       }
-      triggerConfetti();
+      triggerConfetti(coinId);
       toast({
         title: "Wager placed successfully! 🎉",
         description: "Your wager has been placed and the countdown has started.",
