@@ -1,10 +1,10 @@
 import { SUPPORTED_COINS } from "@shared/schema";
 
 export const MULTIPLIER_PERCENTAGES = {
-  "1": 0.0001, // Changed from 0.001 to 0.0001 (0.01%) for easier testing
-  "2": 0.020,
-  "3": 0.025,
-  "5": 0.030,
+  "1": 0.0001, // 0.01% change
+  "2": 0.0002, // 0.02% change
+  "3": 0.0003, // 0.03% change
+  "5": 0.0005, // 0.05% change
 } as const;
 
 export { SUPPORTED_COINS };

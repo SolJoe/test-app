@@ -132,10 +132,28 @@ export function registerRoutes(app: Express): Server {
             const now = new Date();
 
             if (now >= new Date(wager.endTime)) {
+              // Debug logging
+              console.log('Checking wager:', {
+                id: wager.id,
+                cryptoId: wager.cryptoId,
+                direction: wager.direction,
+                currentPrice,
+                targetPrice: wager.targetPrice,
+                startPrice: wager.startPrice
+              });
+
               // Wager has expired
               const won = wager.direction === 'up'
                 ? currentPrice >= wager.targetPrice
                 : currentPrice <= wager.targetPrice;
+
+              console.log('Wager result:', {
+                id: wager.id,
+                won,
+                condition: wager.direction === 'up'
+                  ? `${currentPrice} >= ${wager.targetPrice}`
+                  : `${currentPrice} <= ${wager.targetPrice}`
+              });
 
               await storage.updateWagerStatus(wager.id, won, currentPrice);
             }
