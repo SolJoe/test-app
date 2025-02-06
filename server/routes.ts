@@ -81,8 +81,25 @@ export function registerRoutes(app: Express): Server {
   });
 
   app.get("/api/wagers/active", async (_req, res) => {
-    const wagers = await storage.getActiveWagers();
-    res.json(wagers);
+    try {
+      const [active, recent] = await Promise.all([
+        storage.getActiveWagers(),
+        storage.getRecentWagers()
+      ]);
+
+      // Combine active and recent wagers, removing duplicates
+      const combinedWagers = [...active];
+      for (const wager of recent) {
+        if (!combinedWagers.some(w => w.id === wager.id)) {
+          combinedWagers.push(wager);
+        }
+      }
+
+      res.json(combinedWagers);
+    } catch (error) {
+      console.error('Error fetching wagers:', error);
+      res.status(500).json({ error: "Failed to fetch wagers" });
+    }
   });
 
   app.get("/api/wagers/history", async (_req, res) => {

@@ -7,7 +7,7 @@ import type { Wager } from "@shared/schema";
 
 export function WagerHistory() {
   const { data: wagers, isLoading } = useQuery<Wager[]>({
-    queryKey: ["/api/wagers/active"],
+    queryKey: ["/api/wagers/all"], // Assumed API endpoint change to fetch all wagers
     refetchInterval: 5000, // Refetch every 5 seconds
   });
 
@@ -27,14 +27,20 @@ export function WagerHistory() {
   return (
     <Card className="mt-8">
       <CardHeader>
-        <CardTitle>Active Wagers</CardTitle>
+        <CardTitle>Recent Wagers</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
           {sortedWagers?.map((wager) => (
             <div
               key={wager.id}
-              className="flex flex-col space-y-2 p-4 border rounded-lg"
+              className={`flex flex-col space-y-2 p-4 border rounded-lg ${
+                !wager.isActive && wager.won !== null
+                  ? wager.won
+                    ? "bg-success/10 border-success"
+                    : "bg-destructive/10 border-destructive"
+                  : ""
+              }`}
             >
               <div className="flex justify-between items-center">
                 <span className="font-medium">Direction:</span>
@@ -63,21 +69,39 @@ export function WagerHistory() {
                 <span className="font-medium">Start Price:</span>
                 <span>${wager.startPrice.toFixed(2)}</span>
               </div>
-              <div className="flex justify-between">
-                <span className="font-medium">Time Remaining:</span>
-                <TimeRemaining endTime={new Date(wager.endTime)} />
-              </div>
-              <div className="mt-2">
-                <WagerProgress
-                  startTime={new Date(wager.startTime)}
-                  endTime={new Date(wager.endTime)}
-                />
-              </div>
+              {!wager.isActive && wager.finalPrice && (
+                <div className="flex justify-between">
+                  <span className="font-medium">Final Price:</span>
+                  <span>${wager.finalPrice.toFixed(2)}</span>
+                </div>
+              )}
+              {!wager.isActive && wager.won !== null && (
+                <div className="flex justify-between font-bold">
+                  <span>Result:</span>
+                  <span className={wager.won ? "text-success" : "text-destructive"}>
+                    {wager.won ? "WON" : "LOST"}
+                  </span>
+                </div>
+              )}
+              {wager.isActive && (
+                <>
+                  <div className="flex justify-between">
+                    <span className="font-medium">Time Remaining:</span>
+                    <TimeRemaining endTime={new Date(wager.endTime)} />
+                  </div>
+                  <div className="mt-2">
+                    <WagerProgress
+                      startTime={new Date(wager.startTime)}
+                      endTime={new Date(wager.endTime)}
+                    />
+                  </div>
+                </>
+              )}
             </div>
           ))}
           {(!sortedWagers || sortedWagers.length === 0) && (
             <p className="text-center text-muted-foreground">
-              No active wagers found
+              No wagers found
             </p>
           )}
         </div>
@@ -124,19 +148,11 @@ function WagerProgress({ startTime, endTime }: { startTime: Date; endTime: Date 
     return () => clearInterval(timer);
   }, [startTime, endTime]);
 
-  // Color transitions based on progress
-  const getProgressColor = (value: number) => {
-    if (value >= 100) return "bg-destructive";
-    if (value >= 75) return "bg-destructive";
-    if (value >= 50) return "bg-warning";
-    return "bg-success";
-  };
-
   return (
     <div className="space-y-1.5">
       <Progress
         value={progress}
-        className={`h-4 overflow-hidden rounded-full bg-secondary ${getProgressColor(progress)}`}
+        className={`h-4 overflow-hidden rounded-full bg-secondary`}
       />
     </div>
   );

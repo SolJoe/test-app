@@ -6,6 +6,7 @@ export interface IStorage {
   createWager(wager: InsertWager): Promise<Wager>;
   getActiveWagers(): Promise<Wager[]>;
   getAllWagers(): Promise<Wager[]>;
+  getRecentWagers(): Promise<Wager[]>;
   updateWagerStatus(id: number, won: boolean, finalPrice: number): Promise<void>;
 }
 
@@ -22,7 +23,8 @@ export class DatabaseStorage implements IStorage {
     return db
       .select()
       .from(wagers)
-      .where(eq(wagers.isActive, true));
+      .where(eq(wagers.isActive, true))
+      .orderBy(wagers.startTime);
   }
 
   async getAllWagers(): Promise<Wager[]> {
@@ -30,6 +32,17 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(wagers)
       .orderBy(wagers.startTime);
+  }
+
+  async getRecentWagers(): Promise<Wager[]> {
+    const now = new Date();
+    const thirtyMinutesAgo = new Date(now.getTime() - 30 * 60 * 1000);
+
+    return db
+      .select()
+      .from(wagers)
+      .orderBy(wagers.startTime, "desc")
+      .limit(10);
   }
 
   async updateWagerStatus(id: number, won: boolean, finalPrice: number): Promise<void> {
