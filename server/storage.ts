@@ -54,7 +54,8 @@ export class DatabaseStorage implements IStorage {
 
     if (!wager) return;
 
-    const profit = won ? wager.amount * wager.multiplier : 0;
+    // Calculate profit: if won, it's amount * multiplier - amount, if lost, it's -amount
+    const profit = won ? wager.amount * wager.multiplier - wager.amount : -wager.amount;
 
     await db
       .update(wagers)
