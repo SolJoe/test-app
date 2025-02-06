@@ -1,4 +1,3 @@
-import { Share2 } from "lucide-react";
 import { SiX, SiInstagram } from "react-icons/si";
 import { Button } from "@/components/ui/button";
 import type { Wager } from "@shared/schema";
@@ -9,11 +8,12 @@ interface ShareWagerProps {
 }
 
 export function ShareWager({ wager }: ShareWagerProps) {
+  // Only proceed if the wager was won
+  if (!wager.won) return null;
+
   const coinName = SUPPORTED_COINS.find(coin => coin.id === wager.cryptoId)?.name || wager.cryptoId;
 
-  const shareText = wager.won 
-    ? `🎉 Just won a crypto price movement bet on ${coinName}! \nProfit: $${wager.profit?.toFixed(2)} USDC\nPlatform: Crypto Wager App`
-    : `📊 Just completed a crypto price movement bet on ${coinName}!\nPlatform: Crypto Wager App`;
+  const shareText = `🎉 Just won a crypto price movement bet on ${coinName}! \nProfit: $${wager.profit?.toFixed(2)} USDC\nPlatform: Crypto Wager App`;
 
   const shareViaX = () => {
     const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}`;
