@@ -35,6 +35,7 @@ export function WagerStats() {
   }
 
   if (!wagers || wagers.length === 0) {
+    console.log('No wagers found');
     return (
       <Card>
         <CardHeader>
@@ -49,6 +50,8 @@ export function WagerStats() {
     );
   }
 
+  console.log('Processing wagers:', wagers);
+
   const stats: WagerStats = wagers.reduce(
     (acc, wager) => {
       if (!wager.isActive && wager.completedAt) {
@@ -56,9 +59,11 @@ export function WagerStats() {
         if (wager.won) {
           acc.winningWagers++;
           acc.totalProfit += (wager.profit || 0);
+          console.log('Won wager:', { id: wager.id, profit: wager.profit });
         } else {
           acc.losingWagers++;
           acc.totalProfit -= wager.amount;
+          console.log('Lost wager:', { id: wager.id, amount: -wager.amount });
         }
       }
       return acc;
@@ -75,6 +80,8 @@ export function WagerStats() {
   stats.winRate = stats.totalWagers > 0
     ? (stats.winningWagers / stats.totalWagers) * 100
     : 0;
+
+  console.log('Calculated stats:', stats);
 
   // Prepare chart data - group by completion time
   const chartData = wagers
