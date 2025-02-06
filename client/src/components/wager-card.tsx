@@ -56,7 +56,7 @@ export function WagerCard({ coinId, currentPrice }: WagerCardProps) {
 
       const target = calculateTargetPrice(currentPrice, multiplier, direction);
       const startTime = new Date();
-      const endTime = new Date(startTime.getTime() + 60 * 60 * 1000); // 1 hour
+      const endTime = new Date(startTime.getTime() + 5 * 60 * 1000);
 
       const wagerData = {
         cryptoId: coinId,
@@ -72,13 +72,12 @@ export function WagerCard({ coinId, currentPrice }: WagerCardProps) {
       return apiRequest("POST", "/api/wagers", wagerData);
     },
     onSuccess: () => {
-      setCountdown(3600); // 1 hour in seconds
+      setCountdown(300); 
       if (multiplier) {
         const target = calculateTargetPrice(currentPrice, multiplier, direction);
         setTargetPrice(target);
         setStartPrice(currentPrice);
       }
-      // Invalidate the active wagers query to trigger a refetch
       queryClient.invalidateQueries({ queryKey: ["/api/wagers/active"] });
       triggerConfetti(coinId);
       toast({
