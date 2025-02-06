@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, ArrowUpCircle, ArrowDownCircle } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import type { Wager } from "@shared/schema";
+import { ShareWager } from "@/components/share-wager";
 
 export function WagerHistory() {
   const { data: wagers, isLoading } = useQuery<Wager[]>({
@@ -112,12 +113,15 @@ function WagerCard({ wager }: { wager: Wager }) {
         </div>
       )}
       {!wager.isActive && wager.won !== null && (
-        <div className="flex justify-between font-bold">
-          <span>Result:</span>
-          <span className={wager.won ? "text-success" : "text-destructive"}>
-            {wager.won ? "WON" : "LOST"}
-          </span>
-        </div>
+        <>
+          <div className="flex justify-between font-bold">
+            <span>Result:</span>
+            <span className={wager.won ? "text-success" : "text-destructive"}>
+              {wager.won ? "WON" : "LOST"}
+            </span>
+          </div>
+          <ShareWager wager={wager} />
+        </>
       )}
       {wager.isActive && (
         <>
