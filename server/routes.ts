@@ -59,6 +59,11 @@ async function fetchCryptoPrices(): Promise<Record<string, number> | null> {
   }
 }
 
+// Add this helper function at the top level
+function isWithinThreshold(a: number, b: number, threshold = 0.0000001): boolean {
+  return Math.abs(a - b) <= threshold;
+}
+
 export function registerRoutes(app: Express): Server {
   const httpServer = createServer(app);
   const wss = new WebSocketServer({ server: httpServer, path: "/ws" });
@@ -132,7 +137,7 @@ export function registerRoutes(app: Express): Server {
             const now = new Date();
 
             if (now >= new Date(wager.endTime)) {
-              // Debug logging
+              // Debug logging with more precision
               console.log('Checking wager:', {
                 id: wager.id,
                 cryptoId: wager.cryptoId,
@@ -142,13 +147,14 @@ export function registerRoutes(app: Express): Server {
                 startPrice: Number(wager.startPrice.toFixed(8))
               });
 
-              // Wager has expired - use precise number comparison
+              // Wager has expired - use precise number comparison with threshold
               const preciseCurrentPrice = Number(currentPrice.toFixed(8));
               const preciseTargetPrice = Number(wager.targetPrice.toFixed(8));
 
+              // Determine if the wager is won using a threshold for floating point comparison
               const won = wager.direction === 'up'
-                ? preciseCurrentPrice >= preciseTargetPrice
-                : preciseCurrentPrice <= preciseTargetPrice;
+                ? preciseCurrentPrice >= preciseTargetPrice || isWithinThreshold(preciseCurrentPrice, preciseTargetPrice)
+                : preciseCurrentPrice <= preciseTargetPrice || isWithinThreshold(preciseCurrentPrice, preciseTargetPrice);
 
               console.log('Wager result:', {
                 id: wager.id,
@@ -156,7 +162,8 @@ export function registerRoutes(app: Express): Server {
                 condition: wager.direction === 'up'
                   ? `${preciseCurrentPrice} >= ${preciseTargetPrice}`
                   : `${preciseCurrentPrice} <= ${preciseTargetPrice}`,
-                priceDiff: Math.abs(preciseCurrentPrice - preciseTargetPrice)
+                priceDiff: Math.abs(preciseCurrentPrice - preciseTargetPrice),
+                threshold: 0.0000001
               });
 
               await storage.updateWagerStatus(wager.id, won, currentPrice);

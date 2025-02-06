@@ -24,6 +24,6 @@ export function calculateTargetPrice(currentPrice: number, multiplier: string, d
     ? currentPrice + change
     : currentPrice - change;
 
-  // Round to 8 decimal places for more precise comparison
+  // Round to 8 decimal places for precise comparison
   return Number(targetPrice.toFixed(8));
 }
