@@ -17,6 +17,11 @@ export function WagerHistory() {
     );
   }
 
+  // Sort wagers by startTime in descending order (most recent first)
+  const sortedWagers = wagers?.sort((a, b) => 
+    new Date(b.startTime).getTime() - new Date(a.startTime).getTime()
+  );
+
   return (
     <Card className="mt-8">
       <CardHeader>
@@ -24,7 +29,7 @@ export function WagerHistory() {
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {wagers?.map((wager) => (
+          {sortedWagers?.map((wager) => (
             <div
               key={wager.id}
               className="flex flex-col space-y-2 p-4 border rounded-lg"
@@ -62,7 +67,7 @@ export function WagerHistory() {
               </div>
             </div>
           ))}
-          {(!wagers || wagers.length === 0) && (
+          {(!sortedWagers || sortedWagers.length === 0) && (
             <p className="text-center text-muted-foreground">
               No active wagers found
             </p>
