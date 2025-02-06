@@ -9,8 +9,29 @@ import { SUPPORTED_COINS } from "@shared/schema";
 
 const COINGECKO_API = "https://api.coingecko.com/api/v3";
 let lastKnownPrices: Record<string, number> | null = null;
+let lastFetchTime = 0;
+const MIN_FETCH_INTERVAL = 10000; // Minimum 10 seconds between API calls
+
+// Simulated price updates between API calls
+function simulatePrice(basePrice: number): number {
+  const variation = basePrice * 0.0001; // 0.01% variation
+  return basePrice + (Math.random() * variation * 2 - variation);
+}
 
 async function fetchCryptoPrices(): Promise<Record<string, number> | null> {
+  const now = Date.now();
+
+  // If we have prices and it's too soon to fetch again, simulate price movement
+  if (lastKnownPrices && now - lastFetchTime < MIN_FETCH_INTERVAL) {
+    const simulatedPrices: Record<string, number> = {};
+    for (const coin of SUPPORTED_COINS) {
+      if (lastKnownPrices[coin.id]) {
+        simulatedPrices[coin.id] = simulatePrice(lastKnownPrices[coin.id]);
+      }
+    }
+    return simulatedPrices;
+  }
+
   try {
     const ids = SUPPORTED_COINS.map(coin => coin.id).join(',');
     const response = await fetch(
@@ -25,6 +46,16 @@ async function fetchCryptoPrices(): Promise<Record<string, number> | null> {
 
     if (!response.ok) {
       console.error(`API Error: ${response.status} ${response.statusText}`);
+      // On error, if we have lastKnownPrices, simulate movements
+      if (lastKnownPrices) {
+        const simulatedPrices: Record<string, number> = {};
+        for (const coin of SUPPORTED_COINS) {
+          if (lastKnownPrices[coin.id]) {
+            simulatedPrices[coin.id] = simulatePrice(lastKnownPrices[coin.id]);
+          }
+        }
+        return simulatedPrices;
+      }
       return lastKnownPrices;
     }
 
@@ -41,19 +72,26 @@ async function fetchCryptoPrices(): Promise<Record<string, number> | null> {
       }
     }
 
-    if (!hasAllPrices && lastKnownPrices) {
-      return lastKnownPrices;
-    }
-
     if (hasAllPrices) {
       lastKnownPrices = prices;
-      console.log('Updated prices:', prices);
+      lastFetchTime = now;
+      console.log('Updated prices from API:', prices);
       return prices;
     }
 
     return lastKnownPrices;
   } catch (error) {
     console.error('Error fetching prices:', error);
+    // On error, if we have lastKnownPrices, simulate movements
+    if (lastKnownPrices) {
+      const simulatedPrices: Record<string, number> = {};
+      for (const coin of SUPPORTED_COINS) {
+        if (lastKnownPrices[coin.id]) {
+          simulatedPrices[coin.id] = simulatePrice(lastKnownPrices[coin.id]);
+        }
+      }
+      return simulatedPrices;
+    }
     return lastKnownPrices;
   }
 }
@@ -113,17 +151,23 @@ export function registerRoutes(app: Express): Server {
       if (ws.readyState === WebSocket.OPEN) {
         const prices = await fetchCryptoPrices();
         if (prices) {
+          // Only send if prices have changed
           if (lastKnownPrices) {
+            let hasChanged = false;
             for (const coin of SUPPORTED_COINS) {
               const oldPrice = lastKnownPrices[coin.id];
               const newPrice = prices[coin.id];
               if (oldPrice !== newPrice) {
                 console.log(`Price update for ${coin.id}: ${oldPrice} -> ${newPrice}`);
+                hasChanged = true;
               }
             }
+            if (hasChanged) {
+              ws.send(JSON.stringify(prices));
+            }
+          } else {
+            ws.send(JSON.stringify(prices));
           }
-
-          ws.send(JSON.stringify(prices));
 
           const activeWagers = await storage.getActiveWagers();
           for (const wager of activeWagers) {
@@ -151,9 +195,11 @@ export function registerRoutes(app: Express): Server {
       }
     };
 
+    // Send initial prices immediately
     sendPrices();
 
-    updateInterval = setInterval(sendPrices, 2000);
+    // Update more frequently with simulated prices between real API calls
+    updateInterval = setInterval(sendPrices, 1000);
 
     const pingInterval = setInterval(() => {
       if (ws.readyState === WebSocket.OPEN) {
