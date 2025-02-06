@@ -4,7 +4,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, ArrowUpCircle, ArrowDownCircle } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import type { Wager } from "@shared/schema";
-import { ShareWager } from "@/components/share-wager";
 import { SUPPORTED_COINS } from "@/lib/crypto";
 
 export function WagerHistory() {
@@ -69,7 +68,6 @@ export function WagerHistory() {
   );
 }
 
-// Extracted WagerCard component for reuse
 function WagerCard({ wager }: { wager: Wager }) {
   const coinName = SUPPORTED_COINS.find(coin => coin.id === wager.cryptoId)?.name || wager.cryptoId;
 
@@ -121,21 +119,12 @@ function WagerCard({ wager }: { wager: Wager }) {
         </div>
       )}
       {isCompleted && (
-        <>
-          <div className="flex justify-between font-bold">
-            <span>Result:</span>
-            <span className={wager.won ? "text-success" : "text-destructive"}>
-              {wager.won ? "WON" : "LOST"}
-            </span>
-          </div>
-          {wager.won && (
-            <div className="flex justify-between font-bold">
-              <span>Profit:</span>
-              <span className="text-success">+${wager.profit?.toFixed(2)} USDC</span>
-            </div>
-          )}
-          <ShareWager wager={wager} />
-        </>
+        <div className="flex justify-between font-bold">
+          <span>Result:</span>
+          <span className={wager.won ? "text-success" : "text-destructive"}>
+            {wager.won ? "WON" : "LOST"}
+          </span>
+        </div>
       )}
       {wager.isActive && (
         <>

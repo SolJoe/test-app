@@ -1,6 +1,6 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
-import { WebSocketServer } from "ws";
+import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
 import { insertWagerSchema } from "@shared/schema";
 import { fromZodError } from "zod-validation-error";
@@ -29,8 +29,6 @@ async function fetchCryptoPrices(): Promise<Record<string, number> | null> {
     }
 
     const data = await response.json() as Record<string, { usd: number }>;
-
-    // Verify that we have all the required prices
     const prices: Record<string, number> = {};
     let hasAllPrices = true;
 
@@ -49,6 +47,7 @@ async function fetchCryptoPrices(): Promise<Record<string, number> | null> {
 
     if (hasAllPrices) {
       lastKnownPrices = prices;
+      console.log('Updated prices:', prices);
       return prices;
     }
 
@@ -57,11 +56,6 @@ async function fetchCryptoPrices(): Promise<Record<string, number> | null> {
     console.error('Error fetching prices:', error);
     return lastKnownPrices;
   }
-}
-
-// Add this helper function at the top level
-function isWithinThreshold(a: number, b: number, threshold = 0.0000001): boolean {
-  return Math.abs(a - b) <= threshold;
 }
 
 export function registerRoutes(app: Express): Server {
@@ -92,10 +86,6 @@ export function registerRoutes(app: Express): Server {
         storage.getRecentWagers()
       ]);
 
-      console.log('Active wagers:', active);
-      console.log('Recent wagers:', recent);
-
-      // Combine active and recent wagers, removing duplicates
       const combinedWagers = [...active];
       for (const wager of recent) {
         if (!combinedWagers.some(w => w.id === wager.id)) {
@@ -103,7 +93,6 @@ export function registerRoutes(app: Express): Server {
         }
       }
 
-      console.log('Combined wagers:', combinedWagers);
       res.json(combinedWagers);
     } catch (error) {
       console.error('Error fetching wagers:', error);
@@ -116,19 +105,14 @@ export function registerRoutes(app: Express): Server {
     res.json(wagers);
   });
 
-  // WebSocket connection for real-time price updates
-  wss.on("connection", async (ws) => {
-    // Send initial prices immediately on connection
-    const initialPrices = await fetchCryptoPrices();
-    if (initialPrices) {
-      ws.send(JSON.stringify(initialPrices));
-    }
+  wss.on("connection", (ws: WebSocket) => {
+    console.log('New WebSocket connection established');
+    let updateInterval: NodeJS.Timeout;
 
-    const interval = setInterval(async () => {
-      if (ws.readyState === ws.OPEN) {
+    const sendPrices = async () => {
+      if (ws.readyState === WebSocket.OPEN) {
         const prices = await fetchCryptoPrices();
         if (prices) {
-          // Log price changes
           if (lastKnownPrices) {
             for (const coin of SUPPORTED_COINS) {
               const oldPrice = lastKnownPrices[coin.id];
@@ -141,51 +125,50 @@ export function registerRoutes(app: Express): Server {
 
           ws.send(JSON.stringify(prices));
 
-          // Check and update active wagers
           const activeWagers = await storage.getActiveWagers();
           for (const wager of activeWagers) {
             const currentPrice = prices[wager.cryptoId];
             const now = new Date();
 
             if (now >= new Date(wager.endTime)) {
-              // Debug logging with more precision
               console.log('Checking wager:', {
                 id: wager.id,
                 cryptoId: wager.cryptoId,
                 direction: wager.direction,
-                currentPrice: Number(currentPrice.toFixed(8)),
-                targetPrice: Number(wager.targetPrice.toFixed(8)),
-                startPrice: Number(wager.startPrice.toFixed(8))
+                currentPrice,
+                targetPrice: wager.targetPrice,
+                startPrice: wager.startPrice
               });
 
-              // Wager has expired - use precise number comparison with threshold
-              const preciseCurrentPrice = Number(currentPrice.toFixed(8));
-              const preciseTargetPrice = Number(wager.targetPrice.toFixed(8));
-
-              // Determine if the wager is won using a threshold for floating point comparison
               const won = wager.direction === 'up'
-                ? preciseCurrentPrice >= preciseTargetPrice || isWithinThreshold(preciseCurrentPrice, preciseTargetPrice)
-                : preciseCurrentPrice <= preciseTargetPrice || isWithinThreshold(preciseCurrentPrice, preciseTargetPrice);
-
-              console.log('Wager result:', {
-                id: wager.id,
-                won,
-                condition: wager.direction === 'up'
-                  ? `${preciseCurrentPrice} >= ${preciseTargetPrice}`
-                  : `${preciseCurrentPrice} <= ${preciseTargetPrice}`,
-                priceDiff: Math.abs(preciseCurrentPrice - preciseTargetPrice),
-                threshold: 0.0000001
-              });
+                ? currentPrice >= wager.targetPrice
+                : currentPrice <= wager.targetPrice;
 
               await storage.updateWagerStatus(wager.id, won, currentPrice);
             }
           }
         }
       }
-    }, 5000); // Update every 5 seconds
+    };
+
+    sendPrices();
+
+    updateInterval = setInterval(sendPrices, 2000);
+
+    const pingInterval = setInterval(() => {
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.ping();
+      }
+    }, 30000);
 
     ws.on("close", () => {
-      clearInterval(interval);
+      console.log('WebSocket connection closed');
+      clearInterval(updateInterval);
+      clearInterval(pingInterval);
+    });
+
+    ws.on("error", (error) => {
+      console.error('WebSocket error:', error);
     });
   });
 
