@@ -56,7 +56,7 @@ export function WagerCard({ coinId, currentPrice }: WagerCardProps) {
 
       const target = calculateTargetPrice(currentPrice, multiplier, direction);
       const startTime = new Date();
-      const endTime = new Date(startTime.getTime() + 5 * 60 * 1000);
+      const endTime = new Date(startTime.getTime() + 1 * 60 * 1000); // Changed from 5 minutes to 1 minute
 
       const wagerData = {
         cryptoId: coinId,
@@ -72,7 +72,7 @@ export function WagerCard({ coinId, currentPrice }: WagerCardProps) {
       return apiRequest("POST", "/api/wagers", wagerData);
     },
     onSuccess: () => {
-      setCountdown(300); 
+      setCountdown(60); 
       if (multiplier) {
         const target = calculateTargetPrice(currentPrice, multiplier, direction);
         setTargetPrice(target);
