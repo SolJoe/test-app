@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, ArrowUpCircle, ArrowDownCircle } from "lucide-react";
 import type { Wager } from "@shared/schema";
@@ -57,11 +58,7 @@ export function WagerHistory() {
               </div>
               <div className="flex justify-between">
                 <span className="font-medium">Time Remaining:</span>
-                <span>
-                  {new Date(wager.endTime) > new Date()
-                    ? formatTimeRemaining(new Date(wager.endTime))
-                    : "Expired"}
-                </span>
+                <TimeRemaining endTime={new Date(wager.endTime)} />
               </div>
             </div>
           ))}
@@ -76,14 +73,23 @@ export function WagerHistory() {
   );
 }
 
-function formatTimeRemaining(endTime: Date): string {
+function TimeRemaining({ endTime }: { endTime: Date }) {
+  const [, forceUpdate] = useState({});
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      forceUpdate({});
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
   const now = new Date();
   const diff = endTime.getTime() - now.getTime();
 
-  if (diff <= 0) return "Expired";
+  if (diff <= 0) return <span>Expired</span>;
 
   const minutes = Math.floor(diff / (1000 * 60));
   const seconds = Math.floor((diff % (1000 * 60)) / 1000);
 
-  return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  return <span>{minutes}:{seconds.toString().padStart(2, '0')}</span>;
 }
