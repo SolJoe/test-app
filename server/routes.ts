@@ -8,23 +8,54 @@ import fetch from "node-fetch";
 import { SUPPORTED_COINS } from "@shared/schema";
 
 const COINGECKO_API = "https://api.coingecko.com/api/v3";
+let lastKnownPrices: Record<string, number> | null = null;
 
-async function fetchCryptoPrices() {
+async function fetchCryptoPrices(): Promise<Record<string, number> | null> {
   try {
     const ids = SUPPORTED_COINS.map(coin => coin.id).join(',');
     const response = await fetch(
-      `${COINGECKO_API}/simple/price?ids=${ids}&vs_currencies=usd`
+      `${COINGECKO_API}/simple/price?ids=${ids}&vs_currencies=usd`,
+      {
+        headers: {
+          'Accept': 'application/json',
+          'User-Agent': 'CryptoWagerApp/1.0'
+        }
+      }
     );
-    const data = await response.json();
 
-    return {
-      bitcoin: data.bitcoin?.usd || 0,
-      ethereum: data.ethereum?.usd || 0,
-      binancecoin: data.binancecoin?.usd || 0,
-    };
+    if (!response.ok) {
+      console.error(`API Error: ${response.status} ${response.statusText}`);
+      return lastKnownPrices;
+    }
+
+    const data = await response.json() as Record<string, { usd: number }>;
+
+    // Verify that we have all the required prices
+    const prices: Record<string, number> = {};
+    let hasAllPrices = true;
+
+    for (const coin of SUPPORTED_COINS) {
+      if (data[coin.id]?.usd) {
+        prices[coin.id] = data[coin.id].usd;
+      } else {
+        hasAllPrices = false;
+        console.error(`Missing price data for ${coin.id}`);
+      }
+    }
+
+    if (!hasAllPrices && lastKnownPrices) {
+      return lastKnownPrices;
+    }
+
+    if (hasAllPrices) {
+      lastKnownPrices = prices;
+      return prices;
+    }
+
+    return lastKnownPrices;
   } catch (error) {
     console.error('Error fetching prices:', error);
-    return null;
+    return lastKnownPrices;
   }
 }
 
@@ -55,7 +86,13 @@ export function registerRoutes(app: Express): Server {
   });
 
   // WebSocket connection for real-time price updates
-  wss.on("connection", (ws) => {
+  wss.on("connection", async (ws) => {
+    // Send initial prices immediately on connection
+    const initialPrices = await fetchCryptoPrices();
+    if (initialPrices) {
+      ws.send(JSON.stringify(initialPrices));
+    }
+
     const interval = setInterval(async () => {
       if (ws.readyState === ws.OPEN) {
         const prices = await fetchCryptoPrices();
