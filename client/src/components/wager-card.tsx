@@ -24,6 +24,7 @@ export function WagerCard({ coinId, currentPrice }: WagerCardProps) {
   const [multiplier, setMultiplier] = useState<WagerMultiplier | "">("");
   const [countdown, setCountdown] = useState<number | null>(null);
   const [targetPrice, setTargetPrice] = useState<number | null>(null);
+  const [startPrice, setStartPrice] = useState<number | null>(null); // Added startPrice state
   const { toast } = useToast();
 
   const potentialWinnings = amount && multiplier
@@ -64,6 +65,7 @@ export function WagerCard({ coinId, currentPrice }: WagerCardProps) {
       if (multiplier) {
         const target = calculateTargetPrice(currentPrice, multiplier);
         setTargetPrice(target);
+        setStartPrice(currentPrice); // Update startPrice
       }
       toast({
         title: "Wager placed successfully",
@@ -164,14 +166,21 @@ export function WagerCard({ coinId, currentPrice }: WagerCardProps) {
           </div>
         </div>
 
-        {countdown !== null && targetPrice !== null && (
+        {countdown !== null && targetPrice !== null && startPrice !== null && ( // Added startPrice check
           <div className="p-4 bg-secondary rounded-lg">
             <div className="text-center space-y-2">
               <div className="text-xl font-bold">
                 Time Remaining: {Math.floor(countdown / 60)}:{(countdown % 60).toString().padStart(2, "0")}
               </div>
-              <div>
-                Target Price: ${targetPrice.toFixed(2)}
+              <div className="flex justify-between text-sm"> {/* Changed to flex for side-by-side display */}
+                <span>Start Price: ${startPrice.toLocaleString(undefined, {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}</span>
+                <span>Target Price: ${targetPrice.toLocaleString(undefined, {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}</span>
               </div>
             </div>
           </div>
