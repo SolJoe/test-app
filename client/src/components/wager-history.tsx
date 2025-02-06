@@ -7,8 +7,8 @@ import type { Wager } from "@shared/schema";
 
 export function WagerHistory() {
   const { data: wagers, isLoading } = useQuery<Wager[]>({
-    queryKey: ["/api/wagers/active"], // Changed from '/api/wagers/all' to '/api/wagers/active'
-    refetchInterval: 5000, // Refetch every 5 seconds
+    queryKey: ["/api/wagers/active"],
+    refetchInterval: 5000,
   });
 
   if (isLoading) {
@@ -19,94 +19,121 @@ export function WagerHistory() {
     );
   }
 
-  // Sort wagers by startTime in descending order (most recent first)
-  const sortedWagers = wagers?.sort((a, b) =>
-    new Date(b.startTime).getTime() - new Date(a.startTime).getTime()
-  );
+  // Separate active and recent wagers
+  const activeWagers = wagers?.filter(wager => wager.isActive) || [];
+  const recentWagers = wagers?.filter(wager => !wager.isActive) || [];
 
   return (
-    <Card className="mt-8">
-      <CardHeader>
-        <CardTitle>Recent Wagers</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          {sortedWagers?.map((wager) => (
-            <div
-              key={wager.id}
-              className={`flex flex-col space-y-2 p-4 border rounded-lg ${
-                !wager.isActive && wager.won !== null
-                  ? wager.won
-                    ? "bg-success/10 border-success"
-                    : "bg-destructive/10 border-destructive"
-                  : ""
-              }`}
-            >
-              <div className="flex justify-between items-center">
-                <span className="font-medium">Direction:</span>
-                <span className="flex items-center">
-                  {wager.direction === "up" ? (
-                    <ArrowUpCircle className="mr-1 h-4 w-4 text-green-500" />
-                  ) : (
-                    <ArrowDownCircle className="mr-1 h-4 w-4 text-red-500" />
-                  )}
-                  {wager.direction === "up" ? "LONG" : "SHORT"}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="font-medium">Wager Amount:</span>
-                <span>${wager.amount} USDC</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="font-medium">Multiplier:</span>
-                <span>{wager.multiplier}x</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="font-medium">Target Price:</span>
-                <span>${wager.targetPrice.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="font-medium">Start Price:</span>
-                <span>${wager.startPrice.toFixed(2)}</span>
-              </div>
-              {!wager.isActive && wager.finalPrice && (
-                <div className="flex justify-between">
-                  <span className="font-medium">Final Price:</span>
-                  <span>${wager.finalPrice.toFixed(2)}</span>
-                </div>
-              )}
-              {!wager.isActive && wager.won !== null && (
-                <div className="flex justify-between font-bold">
-                  <span>Result:</span>
-                  <span className={wager.won ? "text-success" : "text-destructive"}>
-                    {wager.won ? "WON" : "LOST"}
-                  </span>
-                </div>
-              )}
-              {wager.isActive && (
-                <>
-                  <div className="flex justify-between">
-                    <span className="font-medium">Time Remaining:</span>
-                    <TimeRemaining endTime={new Date(wager.endTime)} />
-                  </div>
-                  <div className="mt-2">
-                    <WagerProgress
-                      startTime={new Date(wager.startTime)}
-                      endTime={new Date(wager.endTime)}
-                    />
-                  </div>
-                </>
-              )}
-            </div>
-          ))}
-          {(!sortedWagers || sortedWagers.length === 0) && (
-            <p className="text-center text-muted-foreground">
-              No wagers found
-            </p>
+    <div className="space-y-8">
+      {/* Active Wagers Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Active Wagers</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {activeWagers.map((wager) => (
+              <WagerCard key={wager.id} wager={wager} />
+            ))}
+            {activeWagers.length === 0 && (
+              <p className="text-center text-muted-foreground">
+                No active wagers
+              </p>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Recent Wagers Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Recent Wagers</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {recentWagers.map((wager) => (
+              <WagerCard key={wager.id} wager={wager} />
+            ))}
+            {recentWagers.length === 0 && (
+              <p className="text-center text-muted-foreground">
+                No recent wagers
+              </p>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+// Extracted WagerCard component for reuse
+function WagerCard({ wager }: { wager: Wager }) {
+  return (
+    <div
+      className={`flex flex-col space-y-2 p-4 border rounded-lg ${
+        !wager.isActive && wager.won !== null
+          ? wager.won
+            ? "bg-success/10 border-success"
+            : "bg-destructive/10 border-destructive"
+          : ""
+      }`}
+    >
+      <div className="flex justify-between items-center">
+        <span className="font-medium">Direction:</span>
+        <span className="flex items-center">
+          {wager.direction === "up" ? (
+            <ArrowUpCircle className="mr-1 h-4 w-4 text-green-500" />
+          ) : (
+            <ArrowDownCircle className="mr-1 h-4 w-4 text-red-500" />
           )}
+          {wager.direction === "up" ? "LONG" : "SHORT"}
+        </span>
+      </div>
+      <div className="flex justify-between">
+        <span className="font-medium">Wager Amount:</span>
+        <span>${wager.amount} USDC</span>
+      </div>
+      <div className="flex justify-between">
+        <span className="font-medium">Multiplier:</span>
+        <span>{wager.multiplier}x</span>
+      </div>
+      <div className="flex justify-between">
+        <span className="font-medium">Target Price:</span>
+        <span>${wager.targetPrice.toFixed(2)}</span>
+      </div>
+      <div className="flex justify-between">
+        <span className="font-medium">Start Price:</span>
+        <span>${wager.startPrice.toFixed(2)}</span>
+      </div>
+      {!wager.isActive && wager.finalPrice && (
+        <div className="flex justify-between">
+          <span className="font-medium">Final Price:</span>
+          <span>${wager.finalPrice.toFixed(2)}</span>
         </div>
-      </CardContent>
-    </Card>
+      )}
+      {!wager.isActive && wager.won !== null && (
+        <div className="flex justify-between font-bold">
+          <span>Result:</span>
+          <span className={wager.won ? "text-success" : "text-destructive"}>
+            {wager.won ? "WON" : "LOST"}
+          </span>
+        </div>
+      )}
+      {wager.isActive && (
+        <>
+          <div className="flex justify-between">
+            <span className="font-medium">Time Remaining:</span>
+            <TimeRemaining endTime={new Date(wager.endTime)} />
+          </div>
+          <div className="mt-2">
+            <WagerProgress
+              startTime={new Date(wager.startTime)}
+              endTime={new Date(wager.endTime)}
+            />
+          </div>
+        </>
+      )}
+    </div>
   );
 }
 

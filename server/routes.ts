@@ -87,6 +87,9 @@ export function registerRoutes(app: Express): Server {
         storage.getRecentWagers()
       ]);
 
+      console.log('Active wagers:', active);
+      console.log('Recent wagers:', recent);
+
       // Combine active and recent wagers, removing duplicates
       const combinedWagers = [...active];
       for (const wager of recent) {
@@ -95,6 +98,7 @@ export function registerRoutes(app: Express): Server {
         }
       }
 
+      console.log('Combined wagers:', combinedWagers);
       res.json(combinedWagers);
     } catch (error) {
       console.error('Error fetching wagers:', error);
