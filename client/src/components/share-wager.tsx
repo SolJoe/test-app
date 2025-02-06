@@ -8,13 +8,11 @@ interface ShareWagerProps {
 }
 
 export function ShareWager({ wager }: ShareWagerProps) {
-  if (!wager.won) return null;
-
   const coinName = SUPPORTED_COINS.find(coin => coin.id === wager.cryptoId)?.name || wager.cryptoId;
-  
-  const shareText = `🎉 Just won a crypto price movement bet on ${coinName}! 
-Profit: $${wager.profit?.toFixed(2)} USDC
-Platform: Crypto Wager App`;
+
+  const shareText = wager.won 
+    ? `🎉 Just won a crypto price movement bet on ${coinName}! \nProfit: $${wager.profit?.toFixed(2)} USDC\nPlatform: Crypto Wager App`
+    : `📊 Just completed a crypto price movement bet on ${coinName}!\nPlatform: Crypto Wager App`;
 
   const shareViaTwitter = () => {
     const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}`;
@@ -22,15 +20,13 @@ Platform: Crypto Wager App`;
   };
 
   const shareViaNavigator = async () => {
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: 'Successful Crypto Wager',
-          text: shareText,
-        });
-      } catch (err) {
-        console.error('Error sharing:', err);
-      }
+    try {
+      await navigator.share({
+        title: wager.won ? 'Successful Crypto Wager' : 'Crypto Wager Result',
+        text: shareText,
+      });
+    } catch (err) {
+      console.error('Error sharing:', err);
     }
   };
 
