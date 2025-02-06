@@ -135,7 +135,10 @@ function WagerProgress({ startTime, endTime }: { startTime: Date; endTime: Date 
     <div className="space-y-1.5">
       <Progress
         value={progress}
-        className={`h-2 ${getProgressColor(progress)}`}
+        className={`h-4 overflow-hidden rounded-full bg-secondary`}
+        style={{
+          ["--progress-color" as any]: `hsl(var(--${getProgressColor(progress)}))`,
+        }}
       />
     </div>
   );
