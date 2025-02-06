@@ -184,9 +184,12 @@ export function registerRoutes(app: Express): Server {
                 startPrice: wager.startPrice
               });
 
-              const won = wager.direction === 'up'
-                ? currentPrice >= wager.targetPrice
-                : currentPrice <= wager.targetPrice;
+              // Fix winning condition logic
+              const priceMovedUp = currentPrice > wager.startPrice;
+              const priceMovedDown = currentPrice < wager.startPrice;
+
+              const won = (wager.direction === 'up' && priceMovedUp) || 
+                         (wager.direction === 'down' && priceMovedDown);
 
               await storage.updateWagerStatus(wager.id, won, currentPrice);
             }
