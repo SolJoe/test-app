@@ -39,7 +39,7 @@ export function ShareWager({ wager }: ShareWagerProps) {
         onClick={shareViaTwitter}
       >
         <Twitter className="h-4 w-4" />
-        Share on Twitter
+        Share on X
       </Button>
       {navigator.share && (
         <Button
