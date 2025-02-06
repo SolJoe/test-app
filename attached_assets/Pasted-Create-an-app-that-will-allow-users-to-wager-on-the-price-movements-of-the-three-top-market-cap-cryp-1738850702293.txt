@@ -1,0 +1,52 @@
+Create an app that will allow users to wager on the price movements of the three top market cap cryptocurrencies.
+The "wager card" will need to be in the format of a table with 4 rows.
+The 4 rows should be labeled the following:
+"Wager Amount"
+"Wager Multiplier"
+"Potential Winnings"
+"Place Wager"
+
+First, users will need to be able to type in the exact wager amount into the "Wager Amount" field using only USDC or Solana tokens
+-This field will be the Amount of the Wager placed by the user
+
+Secondly, user will be required to choose a "Wager Multiplier"
+-This field will be partially used to populate the row "Potential Winnings"
+	The calculation used to populate the "Potential Winnings" field will be as follows:
+		"Wager Amount" * "Wager Multiplier" = "Potential Winnings"
+-The "Wager Multiplier" field should be a drop down menu with the following options to choose:
+
+1x
+2x
+3x
+5x
+
+The number in front of the "x" represents the amount the "Wager Amount" needs to be multiplied by. So if a user chose 3x for their "Wager Multiplier" and their "Wager Amount" was $10 USDC, the "Potential Winnings" would equal $30 USDC
+
+The last row would be to "Place Wager"
+-This function would submit the wager to be officially placed so the website could track it progress to determine if the wager wins or loses
+-Also each wager once placed will have exactly 1 hour time to either win or lose
+	There should be a countdown timer displayed boldly in the "wager card" once the wager is submitted so the user knows exactly how much time is left for their wager to win or lose
+	There also needs to be another field directly next to the countdown timer which will be populated with the "wager price target"
+		The "wager price target" will be calculated by the following formula:
+			("Current Price of Cryptocurrency") * percentage associated with ("Wager Multiplier") 
+				For reference here are the percentages associated with the "Wager Multiplier"
+					1x = 1.5% increase over ("Current Price of Cryptocurrency")
+					2x = 2% increase over ("Current Price of Cryptocurrency")
+					3x = 2.5% increase over ("Current Price of Cryptocurrency")
+					5x = 3% increase over ("Current Price of Cryptocurrency")
+
+How to determine if a wager "wins" or "loses"?
+
+A user will 
+
+1st choose the amount they wish to wager by typing the amount into the "Wager Amount" field
+
+2nd choose the "Wager Multiplier" they wish to use for their wager
+
+3rd - the website will auto-populate the field to show the user their "Potential Winnings" for the wager if currently submitted
+
+4th Once the wager is submitted the "wager price target" field will be populated by calculating the following formula
+	("Current Price of Cryptocurrency") * percentage associated with ("Wager Multiplier") 
+
+
+The site will also need to store the information submitted for each wager to reference once the wager is complete.
