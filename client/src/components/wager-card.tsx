@@ -12,6 +12,7 @@ import {
 import { CoinId, calculatePotentialWinnings, calculateTargetPrice, type WagerMultiplier } from "@/lib/crypto";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 interface WagerCardProps {
   coinId: CoinId;
@@ -23,6 +24,7 @@ export function WagerCard({ coinId, currentPrice }: WagerCardProps) {
   const [multiplier, setMultiplier] = useState<WagerMultiplier | "">("");
   const [countdown, setCountdown] = useState<number | null>(null);
   const [targetPrice, setTargetPrice] = useState<number | null>(null);
+  const { toast } = useToast();
 
   const potentialWinnings = amount && multiplier 
     ? calculatePotentialWinnings(Number(amount), Number(multiplier))
@@ -31,6 +33,9 @@ export function WagerCard({ coinId, currentPrice }: WagerCardProps) {
   const { mutate: placeWager, isPending } = useMutation({
     mutationFn: async () => {
       if (!multiplier) throw new Error("No multiplier selected");
+      if (!amount || isNaN(Number(amount))) throw new Error("Invalid wager amount");
+      if (currentPrice <= 0) throw new Error("Invalid current price");
+
       const target = calculateTargetPrice(currentPrice, multiplier);
       const startTime = new Date();
       const endTime = new Date(startTime.getTime() + 60 * 60 * 1000); // 1 hour
@@ -41,8 +46,26 @@ export function WagerCard({ coinId, currentPrice }: WagerCardProps) {
         multiplier: Number(multiplier),
         targetPrice: target,
         startPrice: currentPrice,
-        startTime,
-        endTime,
+        startTime: startTime.toISOString(),
+        endTime: endTime.toISOString(),
+      });
+    },
+    onSuccess: () => {
+      setCountdown(3600); // 1 hour in seconds
+      if (multiplier) {
+        const target = calculateTargetPrice(currentPrice, multiplier);
+        setTargetPrice(target);
+      }
+      toast({
+        title: "Wager placed successfully",
+        description: "Your wager has been placed and the countdown has started.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error placing wager",
+        description: error.message,
+        variant: "destructive",
       });
     },
   });
@@ -64,14 +87,7 @@ export function WagerCard({ coinId, currentPrice }: WagerCardProps) {
   }, [countdown]);
 
   const handleSubmit = () => {
-    placeWager(undefined, {
-      onSuccess: () => {
-        setCountdown(3600); // 1 hour in seconds
-        if (multiplier) {
-          setTargetPrice(calculateTargetPrice(currentPrice, multiplier));
-        }
-      },
-    });
+    placeWager(undefined);
   };
 
   return (
@@ -92,7 +108,10 @@ export function WagerCard({ coinId, currentPrice }: WagerCardProps) {
 
         <div className="space-y-2">
           <label className="text-sm font-medium">Wager Multiplier</label>
-          <Select onValueChange={setMultiplier} value={multiplier}>
+          <Select
+            value={multiplier}
+            onValueChange={(value: WagerMultiplier) => setMultiplier(value)}
+          >
             <SelectTrigger>
               <SelectValue placeholder="Select multiplier" />
             </SelectTrigger>
