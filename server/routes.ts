@@ -138,7 +138,7 @@ export function registerRoutes(app: Express): Server {
           }
         }
       }
-    }, 10000); // Update every 10 seconds to respect API rate limits
+    }, 15000); // Update every 15 seconds instead of 10 to respect API rate limits
 
     ws.on("close", () => {
       clearInterval(interval);
