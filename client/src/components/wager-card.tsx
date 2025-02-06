@@ -9,7 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { CoinId, calculatePotentialWinnings, calculateTargetPrice, type WagerMultiplier } from "@/lib/crypto";
+import { CoinId, SUPPORTED_COINS, calculatePotentialWinnings, calculateTargetPrice, type WagerMultiplier } from "@/lib/crypto";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -26,9 +26,11 @@ export function WagerCard({ coinId, currentPrice }: WagerCardProps) {
   const [targetPrice, setTargetPrice] = useState<number | null>(null);
   const { toast } = useToast();
 
-  const potentialWinnings = amount && multiplier 
+  const potentialWinnings = amount && multiplier
     ? calculatePotentialWinnings(Number(amount), Number(multiplier))
     : null;
+
+  const coinName = SUPPORTED_COINS.find(coin => coin.id === coinId)?.name || coinId;
 
   const { mutate: placeWager, isPending } = useMutation({
     mutationFn: async () => {
@@ -94,6 +96,20 @@ export function WagerCard({ coinId, currentPrice }: WagerCardProps) {
   }, [countdown]);
 
   const handleSubmit = () => {
+    const startTime = new Date();
+    const endTime = new Date(startTime.getTime() + 60 * 60 * 1000); // 1 hour from now
+
+    const wagerData = {
+      cryptoId: coinId,
+      amount: Number(amount),
+      multiplier: Number(multiplier),
+      targetPrice: calculateTargetPrice(currentPrice, multiplier as WagerMultiplier),
+      startPrice: currentPrice,
+      startTime: startTime.toISOString(),
+      endTime: endTime.toISOString(),
+    };
+
+    console.log('Submitting wager:', wagerData); // Debug log
     placeWager(undefined);
   };
 
@@ -104,7 +120,7 @@ export function WagerCard({ coinId, currentPrice }: WagerCardProps) {
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-2">
-          <label className="text-sm font-medium">Current Price</label>
+          <label className="text-sm font-medium">Current {coinName} Price</label>
           <div className="text-lg font-semibold">
             ${currentPrice?.toLocaleString(undefined, {
               minimumFractionDigits: 2,
@@ -161,8 +177,8 @@ export function WagerCard({ coinId, currentPrice }: WagerCardProps) {
           </div>
         )}
 
-        <Button 
-          className="w-full" 
+        <Button
+          className="w-full"
           onClick={handleSubmit}
           disabled={!amount || !multiplier || isPending || countdown !== null || !currentPrice}
         >

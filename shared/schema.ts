@@ -1,5 +1,4 @@
 import { pgTable, text, serial, integer, boolean, timestamp, real } from "drizzle-orm/pg-core";
-import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
 export const wagers = pgTable("wagers", {
@@ -15,10 +14,15 @@ export const wagers = pgTable("wagers", {
   won: boolean("won").default(false),
 });
 
-export const insertWagerSchema = createInsertSchema(wagers).omit({
-  id: true,
-  isActive: true,
-  won: true,
+// Custom schema with proper date handling
+export const insertWagerSchema = z.object({
+  cryptoId: z.string(),
+  amount: z.number().positive(),
+  multiplier: z.number().positive(),
+  targetPrice: z.number().positive(),
+  startPrice: z.number().positive(),
+  startTime: z.string().transform((str) => new Date(str)),
+  endTime: z.string().transform((str) => new Date(str)),
 });
 
 export type InsertWager = z.infer<typeof insertWagerSchema>;
