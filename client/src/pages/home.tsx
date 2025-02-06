@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { CryptoPrices } from "@/components/crypto-price";
 import { WagerCard } from "@/components/wager-card";
+import { WagerHistory } from "@/components/wager-history";
 import { SUPPORTED_COINS } from "@/lib/crypto";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { WalletButton } from "@/components/wallet-button";
@@ -39,21 +40,29 @@ export default function Home() {
 
       <CryptoPrices />
 
-      <Tabs defaultValue={SUPPORTED_COINS[0].id} className="w-full">
-        <TabsList className="w-full justify-center">
-          {SUPPORTED_COINS.map((coin) => (
-            <TabsTrigger key={coin.id} value={coin.id}>
-              {coin.name}
-            </TabsTrigger>
-          ))}
-        </TabsList>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div>
+          <Tabs defaultValue={SUPPORTED_COINS[0].id} className="w-full">
+            <TabsList className="w-full justify-center">
+              {SUPPORTED_COINS.map((coin) => (
+                <TabsTrigger key={coin.id} value={coin.id}>
+                  {coin.name}
+                </TabsTrigger>
+              ))}
+            </TabsList>
 
-        {SUPPORTED_COINS.map((coin) => (
-          <TabsContent key={coin.id} value={coin.id}>
-            <WagerCard coinId={coin.id} currentPrice={prices[coin.id]} />
-          </TabsContent>
-        ))}
-      </Tabs>
+            {SUPPORTED_COINS.map((coin) => (
+              <TabsContent key={coin.id} value={coin.id}>
+                <WagerCard coinId={coin.id} currentPrice={prices[coin.id]} />
+              </TabsContent>
+            ))}
+          </Tabs>
+        </div>
+
+        <div>
+          <WagerHistory />
+        </div>
+      </div>
     </div>
   );
 }
