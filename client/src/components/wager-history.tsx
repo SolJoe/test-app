@@ -23,7 +23,8 @@ export function WagerHistory() {
 
   // Separate active and recent wagers
   const activeWagers = wagers?.filter(wager => wager.isActive) || [];
-  const recentWagers = wagers?.filter(wager => !wager.isActive) || [];
+  const recentWagers = wagers?.filter(wager => !wager.isActive)
+    .sort((a, b) => new Date(b.completedAt || 0).getTime() - new Date(a.completedAt || 0).getTime()) || [];
 
   return (
     <div className="space-y-8">
@@ -72,14 +73,18 @@ export function WagerHistory() {
 function WagerCard({ wager }: { wager: Wager }) {
   const coinName = SUPPORTED_COINS.find(coin => coin.id === wager.cryptoId)?.name || wager.cryptoId;
 
+  const isCompleted = !wager.isActive && wager.completedAt;
+  const isWinner = isCompleted && wager.won === true;
+  const isLoser = isCompleted && wager.won === false;
+
   return (
     <div
       className={`flex flex-col space-y-2 p-4 border rounded-lg ${
-        !wager.isActive && wager.won !== null
-          ? wager.won
-            ? "bg-success/10 border-success"
-            : "bg-destructive/10 border-destructive"
-          : ""
+        isWinner
+          ? "bg-success/10 border-success"
+          : isLoser
+          ? "bg-destructive/10 border-destructive"
+          : "border-border"
       }`}
     >
       <div className="flex justify-between items-center">
@@ -109,13 +114,13 @@ function WagerCard({ wager }: { wager: Wager }) {
         <span className="font-medium">Start Price:</span>
         <span>${wager.startPrice.toFixed(2)}</span>
       </div>
-      {!wager.isActive && wager.finalPrice && (
+      {isCompleted && wager.finalPrice && (
         <div className="flex justify-between">
           <span className="font-medium">Final Price:</span>
           <span>${wager.finalPrice.toFixed(2)}</span>
         </div>
       )}
-      {!wager.isActive && wager.won !== null && (
+      {isCompleted && (
         <>
           <div className="flex justify-between font-bold">
             <span>Result:</span>
@@ -123,6 +128,12 @@ function WagerCard({ wager }: { wager: Wager }) {
               {wager.won ? "WON" : "LOST"}
             </span>
           </div>
+          {wager.won && (
+            <div className="flex justify-between font-bold">
+              <span>Profit:</span>
+              <span className="text-success">+${wager.profit?.toFixed(2)} USDC</span>
+            </div>
+          )}
           <ShareWager wager={wager} />
         </>
       )}

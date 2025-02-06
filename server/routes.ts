@@ -137,22 +137,26 @@ export function registerRoutes(app: Express): Server {
                 id: wager.id,
                 cryptoId: wager.cryptoId,
                 direction: wager.direction,
-                currentPrice,
-                targetPrice: wager.targetPrice,
-                startPrice: wager.startPrice
+                currentPrice: Number(currentPrice.toFixed(8)),
+                targetPrice: Number(wager.targetPrice.toFixed(8)),
+                startPrice: Number(wager.startPrice.toFixed(8))
               });
 
-              // Wager has expired
+              // Wager has expired - use precise number comparison
+              const preciseCurrentPrice = Number(currentPrice.toFixed(8));
+              const preciseTargetPrice = Number(wager.targetPrice.toFixed(8));
+
               const won = wager.direction === 'up'
-                ? currentPrice >= wager.targetPrice
-                : currentPrice <= wager.targetPrice;
+                ? preciseCurrentPrice >= preciseTargetPrice
+                : preciseCurrentPrice <= preciseTargetPrice;
 
               console.log('Wager result:', {
                 id: wager.id,
                 won,
                 condition: wager.direction === 'up'
-                  ? `${currentPrice} >= ${wager.targetPrice}`
-                  : `${currentPrice} <= ${wager.targetPrice}`
+                  ? `${preciseCurrentPrice} >= ${preciseTargetPrice}`
+                  : `${preciseCurrentPrice} <= ${preciseTargetPrice}`,
+                priceDiff: Math.abs(preciseCurrentPrice - preciseTargetPrice)
               });
 
               await storage.updateWagerStatus(wager.id, won, currentPrice);
