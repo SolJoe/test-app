@@ -1,3 +1,5 @@
+import { SUPPORTED_COINS } from "@shared/schema";
+
 export const MULTIPLIER_PERCENTAGES = {
   "1": 0.015,
   "2": 0.020,
@@ -5,11 +7,7 @@ export const MULTIPLIER_PERCENTAGES = {
   "5": 0.030,
 } as const;
 
-export const SUPPORTED_COINS = [
-  { id: "bitcoin", name: "Bitcoin", symbol: "BTC" },
-  { id: "ethereum", name: "Ethereum", symbol: "ETH" },
-  { id: "binancecoin", name: "BNB", symbol: "BNB" },
-] as const;
+export { SUPPORTED_COINS };
 
 export type CoinId = typeof SUPPORTED_COINS[number]["id"];
 export type WagerMultiplier = keyof typeof MULTIPLIER_PERCENTAGES;

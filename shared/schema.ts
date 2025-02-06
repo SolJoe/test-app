@@ -1,6 +1,12 @@
 import { pgTable, text, serial, integer, boolean, timestamp, real } from "drizzle-orm/pg-core";
 import { z } from "zod";
 
+export const SUPPORTED_COINS = [
+  { id: "bitcoin", name: "Bitcoin", symbol: "BTC" },
+  { id: "ethereum", name: "Ethereum", symbol: "ETH" },
+  { id: "binancecoin", name: "BNB", symbol: "BNB" },
+] as const;
+
 export const wagers = pgTable("wagers", {
   id: serial("id").primaryKey(),
   cryptoId: text("crypto_id").notNull(),
