@@ -128,6 +128,17 @@ export function registerRoutes(app: Express): Server {
       if (ws.readyState === ws.OPEN) {
         const prices = await fetchCryptoPrices();
         if (prices) {
+          // Log price changes
+          if (lastKnownPrices) {
+            for (const coin of SUPPORTED_COINS) {
+              const oldPrice = lastKnownPrices[coin.id];
+              const newPrice = prices[coin.id];
+              if (oldPrice !== newPrice) {
+                console.log(`Price update for ${coin.id}: ${oldPrice} -> ${newPrice}`);
+              }
+            }
+          }
+
           ws.send(JSON.stringify(prices));
 
           // Check and update active wagers
@@ -171,7 +182,7 @@ export function registerRoutes(app: Express): Server {
           }
         }
       }
-    }, 15000); // Update every 15 seconds instead of 10 to respect API rate limits
+    }, 5000); // Update every 5 seconds
 
     ws.on("close", () => {
       clearInterval(interval);
