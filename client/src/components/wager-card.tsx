@@ -125,26 +125,26 @@ export function WagerCard({ coinId, currentPrice }: WagerCardProps) {
         </div>
 
         <div className="space-y-2">
-          <label className="text-sm font-medium">Wager Direction</label>
-          <div className="flex gap-2">
-            <Button
-              variant={direction === 'up' ? 'default' : 'outline'}
-              className="flex-1"
-              onClick={() => setDirection('up')}
-            >
-              <ArrowUpCircle className="mr-2 h-4 w-4" />
-              Up
-            </Button>
-            <Button
-              variant={direction === 'down' ? 'default' : 'outline'}
-              className="flex-1"
-              onClick={() => setDirection('down')}
-            >
-              <ArrowDownCircle className="mr-2 h-4 w-4" />
-              Down
-            </Button>
+            <label className="text-sm font-medium">Position Type</label>
+            <div className="flex gap-2">
+              <Button
+                variant={direction === 'up' ? 'default' : 'outline'}
+                className="flex-1"
+                onClick={() => setDirection('up')}
+              >
+                <ArrowUpCircle className="mr-2 h-4 w-4" />
+                Long
+              </Button>
+              <Button
+                variant={direction === 'down' ? 'default' : 'outline'}
+                className="flex-1"
+                onClick={() => setDirection('down')}
+              >
+                <ArrowDownCircle className="mr-2 h-4 w-4" />
+                Short
+              </Button>
+            </div>
           </div>
-        </div>
 
         <div className="space-y-2">
           <label className="text-sm font-medium">Wager Amount</label>

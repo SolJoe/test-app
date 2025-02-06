@@ -36,7 +36,7 @@ export function WagerHistory() {
                   ) : (
                     <ArrowDownCircle className="mr-1 h-4 w-4 text-red-500" />
                   )}
-                  {wager.direction.toUpperCase()}
+                  {wager.direction === 'up' ? 'LONG' : 'SHORT'}
                 </span>
               </div>
               <div className="flex justify-between">
