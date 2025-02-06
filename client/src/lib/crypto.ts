@@ -12,12 +12,13 @@ export const SUPPORTED_COINS = [
 ] as const;
 
 export type CoinId = typeof SUPPORTED_COINS[number]["id"];
+export type WagerMultiplier = keyof typeof MULTIPLIER_PERCENTAGES;
 
 export function calculatePotentialWinnings(amount: number, multiplier: number): number {
   return amount * multiplier;
 }
 
-export function calculateTargetPrice(currentPrice: number, multiplier: number): number {
-  const percentage = MULTIPLIER_PERCENTAGES[multiplier as keyof typeof MULTIPLIER_PERCENTAGES];
+export function calculateTargetPrice(currentPrice: number, multiplier: string): number {
+  const percentage = MULTIPLIER_PERCENTAGES[multiplier as WagerMultiplier];
   return currentPrice * (1 + percentage);
 }

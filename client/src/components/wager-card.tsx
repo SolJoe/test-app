@@ -9,7 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { CoinId, calculatePotentialWinnings, calculateTargetPrice } from "@/lib/crypto";
+import { CoinId, calculatePotentialWinnings, calculateTargetPrice, type WagerMultiplier } from "@/lib/crypto";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 
@@ -20,7 +20,7 @@ interface WagerCardProps {
 
 export function WagerCard({ coinId, currentPrice }: WagerCardProps) {
   const [amount, setAmount] = useState("");
-  const [multiplier, setMultiplier] = useState("");
+  const [multiplier, setMultiplier] = useState<WagerMultiplier | "">("");
   const [countdown, setCountdown] = useState<number | null>(null);
   const [targetPrice, setTargetPrice] = useState<number | null>(null);
 
@@ -30,7 +30,8 @@ export function WagerCard({ coinId, currentPrice }: WagerCardProps) {
 
   const { mutate: placeWager, isPending } = useMutation({
     mutationFn: async () => {
-      const target = calculateTargetPrice(currentPrice, Number(multiplier));
+      if (!multiplier) throw new Error("No multiplier selected");
+      const target = calculateTargetPrice(currentPrice, multiplier);
       const startTime = new Date();
       const endTime = new Date(startTime.getTime() + 60 * 60 * 1000); // 1 hour
 
@@ -48,7 +49,7 @@ export function WagerCard({ coinId, currentPrice }: WagerCardProps) {
 
   useEffect(() => {
     if (countdown === null) return;
-    
+
     const timer = setInterval(() => {
       setCountdown((prev) => {
         if (prev === null || prev <= 0) {
@@ -66,7 +67,9 @@ export function WagerCard({ coinId, currentPrice }: WagerCardProps) {
     placeWager(undefined, {
       onSuccess: () => {
         setCountdown(3600); // 1 hour in seconds
-        setTargetPrice(calculateTargetPrice(currentPrice, Number(multiplier)));
+        if (multiplier) {
+          setTargetPrice(calculateTargetPrice(currentPrice, multiplier));
+        }
       },
     });
   };

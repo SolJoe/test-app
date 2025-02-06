@@ -1,9 +1,12 @@
+import { useState } from "react";
 import { CryptoPrices } from "@/components/crypto-price";
 import { WagerCard } from "@/components/wager-card";
 import { SUPPORTED_COINS } from "@/lib/crypto";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function Home() {
+  const [prices, setPrices] = useState<Record<string, number>>({});
+
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-4xl font-bold text-center mb-8">
@@ -23,7 +26,7 @@ export default function Home() {
 
         {SUPPORTED_COINS.map((coin) => (
           <TabsContent key={coin.id} value={coin.id}>
-            <WagerCard coinId={coin.id} currentPrice={0} />
+            <WagerCard coinId={coin.id} currentPrice={prices[coin.id] || 0} />
           </TabsContent>
         ))}
       </Tabs>
