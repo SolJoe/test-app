@@ -23,6 +23,7 @@ interface WagerStats {
 export function WagerStats() {
   const { data: wagers, isLoading } = useQuery<Wager[]>({
     queryKey: ["/api/wagers/history"],
+    refetchInterval: 5000, // Refresh every 5 seconds to catch new completed wagers
   });
 
   if (isLoading) {
@@ -71,25 +72,25 @@ export function WagerStats() {
     }
   );
 
-  stats.winRate = stats.totalWagers > 0 
-    ? (stats.winningWagers / stats.totalWagers) * 100 
+  stats.winRate = stats.totalWagers > 0
+    ? (stats.winningWagers / stats.totalWagers) * 100
     : 0;
 
-  // Prepare chart data - group by day
+  // Prepare chart data - group by completion time
   const chartData = wagers
     .filter(wager => !wager.isActive && wager.completedAt)
     .sort((a, b) => new Date(a.completedAt!).getTime() - new Date(b.completedAt!).getTime())
     .reduce((acc: any[], wager) => {
       const date = new Date(wager.completedAt!).toLocaleDateString();
       const profit = wager.won ? (wager.profit || 0) : -wager.amount;
-      
-      const last = acc[acc.length - 1] || { profit: 0 };
+
+      const last = acc[acc.length - 1] || { cumulative: 0 };
       acc.push({
         date,
         profit: profit,
-        cumulative: last.cumulative ? last.cumulative + profit : profit,
+        cumulative: last.cumulative + profit,
       });
-      
+
       return acc;
     }, []);
 
@@ -104,7 +105,7 @@ export function WagerStats() {
             <div className="text-2xl font-bold">{stats.totalWagers}</div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="py-4">
             <CardTitle className="text-sm font-medium">Win Rate</CardTitle>
@@ -149,7 +150,6 @@ export function WagerStats() {
                 <XAxis
                   dataKey="date"
                   tick={{ fontSize: 12 }}
-                  tickFormatter={(value) => new Date(value).toLocaleDateString()}
                 />
                 <YAxis
                   tick={{ fontSize: 12 }}
