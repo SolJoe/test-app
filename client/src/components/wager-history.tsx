@@ -126,9 +126,9 @@ function WagerProgress({ startTime, endTime }: { startTime: Date; endTime: Date 
 
   // Color transitions based on progress
   const getProgressColor = (value: number) => {
-    if (value >= 75) return "bg-destructive";
-    if (value >= 50) return "bg-warning";
-    return "bg-success";
+    if (value >= 75) return "destructive";
+    if (value >= 50) return "warning";
+    return "success";
   };
 
   return (
