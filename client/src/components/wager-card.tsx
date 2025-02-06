@@ -182,24 +182,24 @@ export function WagerCard({ coinId, currentPrice }: WagerCardProps) {
         </div>
 
         {countdown !== null && targetPrice !== null && startPrice !== null && (
-          <div className="p-4 bg-secondary rounded-lg">
-            <div className="text-center space-y-2">
-              <div className="text-xl font-bold">
-                Time Remaining: {Math.floor(countdown / 60)}:{(countdown % 60).toString().padStart(2, "0")}
-              </div>
-              <div className="flex justify-between text-sm">
-                <span>Start Price: ${startPrice.toLocaleString(undefined, {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })}</span>
-                <span>Target Price: ${targetPrice.toLocaleString(undefined, {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })} ({direction === 'up' ? '↑' : '↓'})</span>
+            <div className="p-4 bg-secondary rounded-lg">
+              <div className="text-center space-y-2">
+                <div className="text-xl font-bold">
+                  Time Remaining: {Math.floor(countdown / 60)}:{(countdown % 60).toString().padStart(2, "0")}
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span>Start Price: ${startPrice.toLocaleString(undefined, {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}</span>
+                  <span>Target Price: ${targetPrice.toLocaleString(undefined, {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })} {direction === 'up' ? '(Long)' : '(Short)'}</span>
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
 
         <Button
           className="w-full"
